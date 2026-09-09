@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: flux_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/models_cache:/app/models_cache
+      - ./backend/loras:/app/loras
+      - ./backend/outputs:/app/outputs
+      - ./backend/flux_webui.db:/app/flux_webui.db
+    environment:
+      - MODELS_DIR=/app/models_cache
+      - LORAS_DIR=/app/loras
+      - OUTPUT_DIR=/app/outputs
+      - DB_URL=sqlite+aiosqlite:////app/flux_webui.db
+      - HOST=0.0.0.0
+      - PORT=8000
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: flux_frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
