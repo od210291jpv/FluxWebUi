@@ -57,9 +57,14 @@ class FluxInferenceService:
 
         self.unload()
 
+        # Ensure we have the correct path if only the folder name was passed
+        actual_path = model_path
+        if not Path(actual_path).exists():
+            actual_path = str(settings.models_dir / model_path)
+
         dtype = torch.bfloat16 if settings.dtype == "bfloat16" else torch.float16
         self.pipeline = FluxPipeline.from_pretrained(
-            model_path,
+            actual_path,
             torch_dtype=dtype,
             local_files_only=True
         )
