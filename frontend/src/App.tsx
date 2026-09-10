@@ -74,7 +74,7 @@ export const App: React.FC = () => {
         </nav>
       </header>
 
-      <main className="flex-1 overflow-hidden relative">
+      <main className="flex-1 overflow-y-auto relative">
         <Routes>
           <Route path="/" element={<GeneratePage />} />
           <Route path="/gallery" element={<GalleryPage />} />

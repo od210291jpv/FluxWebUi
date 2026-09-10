@@ -114,18 +114,44 @@ class TaskQueue:
                 }
                 task.status = TaskStatus.COMPLETED
                 
+                from app.models.database import AsyncSessionLocal, Generation
+                async with AsyncSessionLocal() as db:
+                    gen = Generation(
+                        id=task.task_id,
+                        prompt=task.request.prompt,
+                        model=model_to_use,
+                        width=task.request.width,
+                        height=task.request.height,
+                        steps=steps,
+                        guidance_scale=guidance_scale,
+                        seed=final_seed,
+                        filename=filename,
+                        thumbnail=thumb_filename,
+                        status="completed",
+                        generation_time_s=task.result["generation_time_s"],
+                        lora_name=task.request.lora_path.split("/")[-1] if task.request.lora_path else None,
+                        lora_scale=task.request.lora_scale if task.request.lora_path else None
+                    )
+                    db.add(gen)
+                    await db.commit()
+                
             except Exception as e:
                 task.status = TaskStatus.FAILED
                 task.error = str(e)
                 
             finally:
                 event_type = "task_completed" if task.status == TaskStatus.COMPLETED else "task_failed"
-                await ws_manager.broadcast({
+                
+                msg = {
                     "type": event_type,
-                    "task_id": task.task_id,
-                    "result": task.result,
-                    "error": task.error
-                })
+                    "task_id": task.task_id
+                }
+                if task.status == TaskStatus.COMPLETED and task.result:
+                    msg.update(task.result)
+                elif task.error:
+                    msg["error"] = task.error
+                    
+                await ws_manager.broadcast(msg)
                 self.queue.task_done()
 
 task_queue = TaskQueue(max_size=settings.max_queue_size)
