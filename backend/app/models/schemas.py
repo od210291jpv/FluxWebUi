@@ -64,6 +64,11 @@ class SystemStatusResponse(BaseModel):
     vram_total_gb: float
     loaded_model: Optional[str] = None
     queue_depth: int
+    gpu_load_percent: float = 0.0
+    cpu_percent: float = 0.0
+    ram_used_gb: float = 0.0
+    ram_total_gb: float = 0.0
+    cpu_info: str = "Unknown CPU"
 
 class ModelInfo(BaseModel):
     id: str
@@ -79,3 +84,27 @@ class LoraInfo(BaseModel):
 
 class LorasResponse(BaseModel):
     loras: list[LoraInfo]
+
+class TaskInfoResponse(BaseModel):
+    task_id: str
+    status: TaskStatus
+    position: Optional[int] = None
+    # Generation params
+    prompt: str
+    model: Optional[str] = None
+    width: int
+    height: int
+    num_inference_steps: Optional[int] = None
+    guidance_scale: Optional[float] = None
+    lora_path: Optional[str] = None
+    lora_scale: float
+    # Progress (set while running)
+    progress_step: Optional[int] = None
+    progress_total: Optional[int] = None
+    # Outcome
+    error: Optional[str] = None
+    created_at: datetime
+
+class TasksListResponse(BaseModel):
+    tasks: list[TaskInfoResponse]
+

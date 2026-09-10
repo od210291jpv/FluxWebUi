@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from typing import Optional, Callable
 import torch
-from diffusers import FluxPipeline
+from diffusers import DiffusionPipeline
 from PIL import Image
 
 from app.config import settings
@@ -63,7 +63,7 @@ class FluxInferenceService:
             actual_path = str(settings.models_dir / model_path)
 
         dtype = torch.bfloat16 if settings.dtype == "bfloat16" else torch.float16
-        self.pipeline = FluxPipeline.from_pretrained(
+        self.pipeline = DiffusionPipeline.from_pretrained(
             actual_path,
             torch_dtype=dtype,
             local_files_only=True

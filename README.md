@@ -6,6 +6,14 @@ A full-stack web application for generating images using FLUX diffusion models r
 **Frontend**: React / TypeScript with Tailwind CSS  
 **Inference**: Local GPU via `FluxPipeline` (bfloat16 + CPU offload)
 
+## Features
+
+| Page | Description |
+|---|---|
+| **Generate** | Prompt input, model/LoRA selection, aspect ratio picker, inference settings, live progress |
+| **Gallery** | Paginated browse of all generated images with prompt search |
+| **Dashboard** | Real-time task queue, per-task progress & metadata, GPU/CPU/RAM resource monitoring, model list |
+
 ## Prerequisites
 
 - **Python 3.11+**
@@ -138,15 +146,65 @@ All settings can be configured via environment variables or a `.env` file in the
 Browser (React SPA)
     │
     ├── HTTP ──→ FastAPI REST API
-    │              ├── POST /api/generate      → Task Queue → GPU Worker
-    │              ├── GET  /api/tasks/{id}     → Task Status
-    │              ├── GET  /api/gallery        → SQLite DB
-    │              ├── GET  /api/system/status   → GPU Info
+    │              ├── POST /api/generate        → Task Queue → GPU Worker
+    │              ├── GET  /api/tasks           → All tasks (dashboard)
+    │              ├── GET  /api/tasks/{id}      → Single task status
+    │              ├── DELETE /api/tasks/{id}    → Cancel queued task
+    │              ├── GET  /api/gallery         → SQLite DB
+    │              ├── GET  /api/system/status   → GPU / CPU / RAM info
+    │              ├── GET  /api/system/models   → Available models
+    │              ├── GET  /api/system/loras    → Available LoRAs
     │              └── GET  /api/images/{file}   → Static Files
     │
     └── WS ───→ /ws/progress
-                   └── Real-time step-by-step progress updates
+                   └── Real-time events: task_queued, task_started,
+                       task_progress (step/total), task_completed, task_failed
 ```
+
+## Dashboard
+
+The **Dashboard** tab (accessible from the top navigation) provides a live overview:
+
+### Task Queue Panel
+Each generation task is shown as a card with:
+- **Status badge** — Queued / Running / Completed / Failed with colour coding
+- **Progress bar** — live step counter and % complete for running tasks
+- **Metadata chips** — Model, Aspect Ratio, Dimensions, Inference Steps, CFG Scale, LoRA & LoRA Scale
+- **Prompt viewer** — click *Prompt ↗* to open a modal with the full prompt text
+
+Progress updates arrive via WebSocket in real time; the task list also polls every 2 seconds.
+
+### Resource Panel
+| Metric | Source |
+|---|---|
+| GPU name | `torch.cuda.get_device_name` |
+| GPU load % | `pynvml` (NVIDIA only; shows 0% on non-NVIDIA) |
+| VRAM used / total | `torch.cuda.memory_allocated` / `get_device_properties` |
+| CPU name | `platform.processor` |
+| CPU load % | `psutil.cpu_percent` |
+| RAM used / total | `psutil.virtual_memory` |
+
+Gauge bars shift colour: **green → yellow → red** as utilisation increases.
+
+### Model List Panel
+All models found in `models_cache/` are listed, with the currently loaded model highlighted by a glowing violet **LOADED** badge.
+
+## Python Dependencies
+
+| Package | Purpose |
+|---|---|
+| `fastapi` | REST API framework |
+| `uvicorn` | ASGI server |
+| `sqlalchemy` + `aiosqlite` | Async SQLite ORM |
+| `pydantic` + `pydantic-settings` | Schema validation & settings |
+| `diffusers` | FLUX / HuggingFace pipeline |
+| `transformers` | Text encoders |
+| `accelerate` | Model sharding / CPU offload |
+| `torch` | PyTorch (CUDA build) |
+| `pillow` | Image saving & thumbnails |
+| `websockets` | WebSocket support |
+| `psutil` | CPU & RAM metrics for Dashboard |
+| `pynvml` | NVIDIA GPU utilisation % for Dashboard |
 
 ## Model Defaults
 

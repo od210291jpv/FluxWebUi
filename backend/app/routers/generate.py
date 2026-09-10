@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
-from app.models.schemas import GenerateRequest, TaskResponse, TaskStatus
+from app.models.schemas import GenerateRequest, TaskResponse, TaskStatus, TaskInfoResponse, TasksListResponse
 from app.services.queue import task_queue
 from app.models.database import get_db, Generation
 
@@ -65,3 +65,29 @@ async def cancel_task(task_id: str):
     if not success:
         raise HTTPException(status_code=400, detail="Could not cancel task")
     return {"status": "cancelled"}
+
+
+@router.get("/tasks", response_model=TasksListResponse)
+async def list_all_tasks():
+    """Return all in-memory tasks with their parameters and live progress."""
+    tasks = task_queue.get_all_tasks()
+    items: list[TaskInfoResponse] = []
+    for t in tasks:
+        progress = task_queue.task_progress.get(t.task_id)
+        items.append(TaskInfoResponse(
+            task_id=t.task_id,
+            status=t.status,
+            prompt=t.request.prompt,
+            model=t.request.model,
+            width=t.request.width,
+            height=t.request.height,
+            num_inference_steps=t.request.num_inference_steps,
+            guidance_scale=t.request.guidance_scale,
+            lora_path=t.request.lora_path,
+            lora_scale=t.request.lora_scale,
+            progress_step=progress[0] if progress else None,
+            progress_total=progress[1] if progress else None,
+            error=t.error,
+            created_at=t.created_at,
+        ))
+    return TasksListResponse(tasks=items)

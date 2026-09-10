@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Routes, Route, NavLink } from 'react-router-dom';
 import { GeneratePage } from './pages/GeneratePage';
 import { GalleryPage } from './pages/GalleryPage';
+import { DashboardPage } from './pages/DashboardPage';
 import { SystemStatusPanel } from './components/SystemStatus';
 import { wsManager } from './api/ws';
 import { useSystemStore } from './store/systemStore';
@@ -71,6 +72,12 @@ export const App: React.FC = () => {
           >
             Gallery
           </NavLink>
+          <NavLink 
+            to="/dashboard" 
+            className={({isActive}) => `transition-colors hover:text-violet-400 ${isActive ? 'text-violet-500' : 'text-gray-400'}`}
+          >
+            Dashboard
+          </NavLink>
         </nav>
       </header>
 
@@ -78,6 +85,7 @@ export const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<GeneratePage />} />
           <Route path="/gallery" element={<GalleryPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
         </Routes>
       </main>
 

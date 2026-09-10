@@ -54,6 +54,11 @@ export interface SystemStatus {
   vram_total_gb: number;
   loaded_model: string | null;
   queue_depth: number;
+  gpu_load_percent: number;
+  cpu_percent: number;
+  ram_used_gb: number;
+  ram_total_gb: number;
+  cpu_info: string;
 }
 
 export interface ModelDefaults {
@@ -118,3 +123,25 @@ export type WebSocketEvent =
   | TaskProgressEvent
   | TaskCompletedEvent
   | TaskFailedEvent;
+
+export interface QueuedTaskInfo {
+  task_id: string;
+  status: 'queued' | 'running' | 'completed' | 'failed';
+  position?: number;
+  prompt: string;
+  model: string | null;
+  width: number;
+  height: number;
+  num_inference_steps: number | null;
+  guidance_scale: number | null;
+  lora_path: string | null;
+  lora_scale: number;
+  progress_step: number | null;
+  progress_total: number | null;
+  error: string | null;
+  created_at: string;
+}
+
+export interface TasksListResponse {
+  tasks: QueuedTaskInfo[];
+}

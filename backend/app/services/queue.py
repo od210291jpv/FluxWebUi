@@ -22,6 +22,7 @@ class TaskQueue:
     def __init__(self, max_size: int = 10):
         self.queue: asyncio.Queue[Task] = asyncio.Queue(maxsize=max_size)
         self.tasks: dict[str, Task] = {}
+        self.task_progress: dict[str, tuple[int, int]] = {}  # task_id -> (step, total)
 
     def submit(self, task_id: str, request: GenerateRequest) -> Task:
         task = Task(task_id=task_id, request=request)
@@ -46,6 +47,10 @@ class TaskQueue:
 
     def get_queue_depth(self) -> int:
         return self.queue.qsize()
+
+    def get_all_tasks(self) -> list[Task]:
+        """Return all tracked tasks sorted newest-first."""
+        return sorted(self.tasks.values(), key=lambda t: t.created_at, reverse=True)
 
     async def worker(self):
         while True:
@@ -74,6 +79,7 @@ class TaskQueue:
                 loop = asyncio.get_running_loop()
 
                 def progress_callback(current, total):
+                    self.task_progress[task.task_id] = (current, total)
                     asyncio.run_coroutine_threadsafe(
                         ws_manager.broadcast({
                             "type": "task_progress",
