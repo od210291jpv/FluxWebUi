@@ -28,10 +28,41 @@ FLUX models must be downloaded manually and placed in the `backend/models_cache/
 
 ### Where to Get Models
 
-| Model | License | Source |
-|---|---|---|
-| FLUX.1-schnell | Apache 2.0 | [huggingface.co/black-forest-labs/FLUX.1-schnell](https://huggingface.co/black-forest-labs/FLUX.1-schnell) |
-| FLUX.1-dev | Non-commercial | [huggingface.co/black-forest-labs/FLUX.1-dev](https://huggingface.co/black-forest-labs/FLUX.1-dev) |
+| Model | Pipeline | License | Recommended Steps | Source |
+|---|---|---|---|---|
+| FLUX.1-schnell | `FluxPipeline` | Apache 2.0 | 4 | [huggingface.co/black-forest-labs/FLUX.1-schnell](https://huggingface.co/black-forest-labs/FLUX.1-schnell) |
+| FLUX.1-dev | `FluxPipeline` | Non-commercial | 28 | [huggingface.co/black-forest-labs/FLUX.1-dev](https://huggingface.co/black-forest-labs/FLUX.1-dev) |
+| Z-Image-Turbo | `ZImagePipeline` | Apache 2.0 | 8 | [huggingface.co/Tongyi-MAI/Z-Image-Turbo](https://huggingface.co/Tongyi-MAI/Z-Image-Turbo) |
+
+The app auto-detects the pipeline class from each model's `model_index.json` and applies the correct defaults automatically.
+
+### Downloading Models
+
+Use the `huggingface-cli` (included with `huggingface_hub`, which is installed as part of the requirements):
+
+```bash
+# FLUX.1-schnell — fastest FLUX, Apache 2.0
+huggingface-cli download black-forest-labs/FLUX.1-schnell \
+  --local-dir backend/models_cache/FLUX.1-schnell
+
+# FLUX.1-dev — higher quality, non-commercial
+huggingface-cli download black-forest-labs/FLUX.1-dev \
+  --local-dir backend/models_cache/FLUX.1-dev
+
+# Z-Image-Turbo — 8-step, 6B params, Apache 2.0
+huggingface-cli download Tongyi-MAI/Z-Image-Turbo \
+  --local-dir backend/models_cache/Z-Image-Turbo
+```
+
+> **HuggingFace account / token**: FLUX.1-dev requires accepting the model license. Log in first:
+> ```bash
+> huggingface-cli login
+> ```
+
+> **Windows tip**: If you already have a model cached by HuggingFace, symlink it instead of re-downloading:
+> ```bash
+> mklink /D "backend\models_cache\FLUX.1-schnell" "C:\Users\<you>\.cache\huggingface\hub\models--black-forest-labs--FLUX.1-schnell\snapshots\<hash>"
+> ```
 
 ### Directory Structure
 
@@ -208,13 +239,15 @@ All models found in `models_cache/` are listed, with the currently loaded model 
 
 ## Model Defaults
 
-| Parameter | FLUX.1-schnell | FLUX.1-dev |
-|---|---|---|
-| Inference Steps | 4 | 28 |
-| Guidance Scale | 0.0 | 3.5 |
-| Max Sequence Length | 256 | 512 |
+The app reads `model_index.json` from each model folder to detect the pipeline class and sets these defaults automatically in the UI:
 
-The UI automatically adjusts these defaults when you switch models.
+| Parameter | FLUX.1-schnell | FLUX.1-dev | Z-Image-Turbo |
+|---|---|---|---|
+| Pipeline | `FluxPipeline` | `FluxPipeline` | `ZImagePipeline` |
+| Inference Steps | 4 | 28 | 8 |
+| Guidance Scale | 0.0 | 3.5 | 0.0 |
+| Max Sequence Length | 256 | 512 | N/A |
+| LoRA support | ✅ | ✅ | ❌ (not yet in diffusers) |
 
 ## License
 
