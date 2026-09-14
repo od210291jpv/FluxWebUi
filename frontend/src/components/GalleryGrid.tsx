@@ -55,15 +55,35 @@ export const GalleryGrid: React.FC = () => {
       </div>
 
       {selectedImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 sm:p-8" onClick={() => setSelectedImage(null)}>
-          <div className="relative w-full h-full max-w-7xl max-h-full flex flex-col md:flex-row gap-6 bg-gray-950 rounded-2xl border border-gray-800 overflow-hidden" onClick={e => e.stopPropagation()}>
-            <button className="absolute top-4 right-4 z-10 p-2 bg-gray-900/80 rounded-full text-white hover:bg-gray-800 transition-colors" onClick={() => setSelectedImage(null)}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 sm:p-8"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div
+            className="relative w-full h-[90vh] max-w-7xl flex flex-col md:flex-row bg-gray-950 rounded-2xl border border-gray-800 overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              className="absolute top-4 right-4 z-10 p-2 bg-gray-900/80 rounded-full text-white hover:bg-gray-800 transition-colors"
+              onClick={() => setSelectedImage(null)}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
-            <div className="flex-1 overflow-hidden flex items-center justify-center bg-black p-4">
-              <img src={selectedImage.image_url} className="max-w-full max-h-full object-contain" alt={selectedImage.prompt} />
+
+            {/* Image area — min-h-0 prevents flex child from overflowing */}
+            <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center bg-black p-4">
+              <img
+                src={selectedImage.image_url}
+                className="max-w-full max-h-full object-contain"
+                alt={selectedImage.prompt}
+              />
             </div>
-            <div className="w-full md:w-80 flex flex-col bg-gray-900 p-6 overflow-y-auto border-l border-gray-800">
+
+            {/* Sidebar */}
+            <div className="w-full md:w-80 shrink-0 flex flex-col bg-gray-900 p-6 overflow-y-auto border-l border-gray-800">
               <h3 className="text-lg font-semibold text-white mb-4">Details</h3>
               <div className="flex flex-col gap-4 text-sm">
                 <div>
@@ -89,17 +109,31 @@ export const GalleryGrid: React.FC = () => {
                   </div>
                   <div>
                     <span className="text-gray-500 block">Time</span>
-                    <span className="text-gray-200">{selectedImage.time.toFixed(1)}s</span>
+                    <span className="text-gray-200">
+                      {selectedImage.time != null ? `${selectedImage.time.toFixed(1)}s` : '\u2014'}
+                    </span>
                   </div>
                 </div>
               </div>
+
               <div className="mt-8 flex flex-col gap-3">
-                <button onClick={() => handleDownload(selectedImage)} className="w-full py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <SendToSaverButton imageUrl={selectedImage.image_url} />
+                <button
+                  onClick={() => handleDownload(selectedImage)}
+                  className="w-full py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
                   Download
                 </button>
-                <button onClick={() => handleDelete(selectedImage.id)} className="w-full py-2 bg-transparent border border-red-900/50 hover:bg-red-950 text-red-500 rounded-lg transition-colors font-medium flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                <button
+                  onClick={() => handleDelete(selectedImage.id)}
+                  className="w-full py-2 bg-transparent border border-red-900/50 hover:bg-red-950 text-red-500 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
                   Delete
                 </button>
               </div>
@@ -108,5 +142,64 @@ export const GalleryGrid: React.FC = () => {
         </div>
       )}
     </>
+  );
+};
+
+// Send to Saver button with loading / success / error feedback
+type SaverState = 'idle' | 'loading' | 'success' | 'error';
+
+const SendToSaverButton: React.FC<{ imageUrl: string }> = ({ imageUrl }) => {
+  const [state, setState] = useState<SaverState>('idle');
+
+  const handleSend = async () => {
+    if (state === 'loading') return;
+    setState('loading');
+    try {
+      const endpoint = `http://192.168.88.252:8080/Content/ParseByLink?contentLink=${encodeURIComponent(imageUrl)}`;
+      const res = await fetch(endpoint);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setState('success');
+    } catch (err) {
+      console.error('Send to Saver failed', err);
+      setState('error');
+    } finally {
+      setTimeout(() => setState('idle'), 3000);
+    }
+  };
+
+  const label =
+    state === 'loading' ? 'Sending...' :
+    state === 'success' ? 'Sent!' :
+    state === 'error'   ? 'Failed - retry?' :
+    'Send to Saver';
+
+  const cls =
+    state === 'loading' ? 'bg-gray-700 text-gray-300 cursor-wait' :
+    state === 'success' ? 'bg-green-700 hover:bg-green-600 text-white' :
+    state === 'error'   ? 'bg-red-800 hover:bg-red-700 text-white' :
+    'bg-teal-700 hover:bg-teal-600 text-white';
+
+  return (
+    <button
+      onClick={handleSend}
+      disabled={state === 'loading'}
+      className={`w-full py-2 rounded-lg transition-colors font-medium flex items-center justify-center gap-2 ${cls}`}
+    >
+      {state === 'loading' ? (
+        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+        </svg>
+      ) : state === 'success' ? (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+        </svg>
+      ) : (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12V4m0 0l-3 3m3-3l3 3" />
+        </svg>
+      )}
+      {label}
+    </button>
   );
 };
