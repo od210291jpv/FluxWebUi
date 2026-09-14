@@ -155,7 +155,8 @@ const SendToSaverButton: React.FC<{ imageUrl: string }> = ({ imageUrl }) => {
     if (state === 'loading') return;
     setState('loading');
     try {
-      const endpoint = `http://192.168.88.252:8080/Content/ParseByLink?contentLink=${encodeURIComponent(imageUrl)}`;
+      const absoluteUrl = imageUrl.startsWith('http') ? imageUrl : `${window.location.origin}/${imageUrl.replace(/^\//, '')}`;
+      const endpoint = `http://192.168.88.252:8080/Content/ParseByLink?contentLink=${encodeURIComponent(absoluteUrl)}`;
       const res = await fetch(endpoint);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setState('success');
