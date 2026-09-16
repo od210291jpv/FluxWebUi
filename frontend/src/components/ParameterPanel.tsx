@@ -4,8 +4,8 @@ import { useSystemStore } from '../store/systemStore';
 
 const aspectRatios = [
   { label: '1:1', w: 1024, h: 1024 },
-  { label: '16:9', w: 1365, h: 768 },
-  { label: '9:16', w: 768, h: 1365 },
+  { label: '16:9', w: 1344, h: 768 },
+  { label: '9:16', w: 768, h: 1344 },
   { label: '4:3', w: 1152, h: 864 },
   { label: '3:2', w: 1216, h: 832 },
   { label: '2:3', w: 832, h: 1216 },
