@@ -3,13 +3,16 @@ import { PromptInput } from '../components/PromptInput';
 import { ParameterPanel } from '../components/ParameterPanel';
 import { GenerationProgress } from '../components/GenerationProgress';
 import { ImagePreview } from '../components/ImagePreview';
+import { QueueIndicator } from '../components/QueueIndicator';
 import { useGenerationStore } from '../store/generationStore';
 
 export const GeneratePage: React.FC = () => {
-  const { submitGeneration, currentTask, prompt, parameters } = useGenerationStore();
+  const { submitGeneration, isSubmitting, queuedTasks, prompt, parameters } = useGenerationStore();
   
-  const isGenerating = currentTask.status === 'queued' || currentTask.status === 'running';
   const canGenerate = prompt.trim().length > 0 && parameters.model;
+  const activeCount = queuedTasks.filter(
+    (t) => t.status === 'queued' || t.status === 'running'
+  ).length;
 
   return (
     <div className="flex flex-col lg:flex-row h-full w-full gap-6 p-4 sm:p-6 pb-12">
@@ -19,15 +22,16 @@ export const GeneratePage: React.FC = () => {
         <ParameterPanel />
         <button
           onClick={submitGeneration}
-          disabled={!canGenerate || isGenerating}
+          disabled={!canGenerate || isSubmitting}
           className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg transition-all ${
-            !canGenerate || isGenerating
+            !canGenerate || isSubmitting
               ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
               : 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 active:scale-[0.98]'
           }`}
         >
-          {isGenerating ? 'Generating...' : 'Generate'}
+          {isSubmitting ? 'Submitting...' : activeCount > 0 ? `Generate (${activeCount} in queue)` : 'Generate'}
         </button>
+        <QueueIndicator />
       </div>
       
       {/* Right Output Area */}

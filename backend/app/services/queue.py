@@ -24,11 +24,16 @@ class TaskQueue:
         self.tasks: dict[str, Task] = {}
         self.task_progress: dict[str, tuple[int, int]] = {}  # task_id -> (step, total)
 
-    def submit(self, task_id: str, request: GenerateRequest) -> Task:
+    async def submit(self, task_id: str, request: GenerateRequest) -> Task:
         task = Task(task_id=task_id, request=request)
         self.tasks[task_id] = task
         try:
             self.queue.put_nowait(task)
+            await ws_manager.broadcast({
+                "type": "task_queued",
+                "task_id": task_id,
+                "position": self.queue.qsize(),
+            })
         except asyncio.QueueFull:
             task.status = TaskStatus.FAILED
             task.error = "Queue is full"

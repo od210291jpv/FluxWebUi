@@ -2,15 +2,20 @@ import React from 'react';
 import { useGenerationStore } from '../store/generationStore';
 
 export const GenerationProgress: React.FC = () => {
-  const { currentTask } = useGenerationStore();
+  const { queuedTasks } = useGenerationStore();
 
-  if (currentTask.status === 'idle' || currentTask.status === 'completed' || currentTask.status === 'failed') {
+  // Find the first running or queued task to show progress for
+  const runningTask = queuedTasks.find((t) => t.status === 'running');
+  const queuedTask = queuedTasks.find((t) => t.status === 'queued');
+  const activeTask = runningTask || queuedTask;
+
+  if (!activeTask) {
     return null;
   }
 
-  const isQueued = currentTask.status === 'queued';
-  const progressPercent = currentTask.progress && currentTask.totalSteps
-    ? Math.round((currentTask.progress / currentTask.totalSteps) * 100)
+  const isQueued = activeTask.status === 'queued';
+  const progressPercent = activeTask.progress && activeTask.totalSteps
+    ? Math.round((activeTask.progress / activeTask.totalSteps) * 100)
     : 0;
 
   return (
@@ -22,8 +27,8 @@ export const GenerationProgress: React.FC = () => {
             <div className="text-lg font-medium text-gray-200">
               Waiting in queue...
             </div>
-            {currentTask.position !== undefined && (
-              <div className="text-sm text-gray-400">Position: {currentTask.position}</div>
+            {activeTask.position !== undefined && (
+              <div className="text-sm text-gray-400">Position: {activeTask.position}</div>
             )}
           </>
         ) : (
@@ -38,9 +43,9 @@ export const GenerationProgress: React.FC = () => {
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            {currentTask.progress !== undefined && currentTask.totalSteps && (
+            {activeTask.progress !== undefined && activeTask.totalSteps && (
               <div className="text-xs text-gray-500 mt-2">
-                Step {currentTask.progress} of {currentTask.totalSteps}
+                Step {activeTask.progress} of {activeTask.totalSteps}
               </div>
             )}
           </>

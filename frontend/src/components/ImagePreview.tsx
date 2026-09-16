@@ -2,7 +2,7 @@ import React from 'react';
 import { useGenerationStore } from '../store/generationStore';
 
 export const ImagePreview: React.FC = () => {
-  const { lastResult, currentTask, reuseSeed } = useGenerationStore();
+  const { lastResult, queuedTasks, reuseSeed } = useGenerationStore();
 
   const handleDownload = async () => {
     if (!lastResult?.imageUrl) return;
@@ -28,16 +28,22 @@ export const ImagePreview: React.FC = () => {
     }
   };
 
-  if (currentTask.status === 'queued' || currentTask.status === 'running') {
+  const hasActiveTask = queuedTasks.some(
+    (t) => t.status === 'queued' || t.status === 'running'
+  );
+
+  if (hasActiveTask) {
     return null; // Handled by GenerationProgress
   }
 
-  if (currentTask.status === 'failed') {
+  // Show the most recent failed task's error (if no result to show yet)
+  const lastFailed = queuedTasks.find((t) => t.status === 'failed');
+  if (!lastResult && lastFailed) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900 rounded-xl border border-red-900/50 p-8 text-red-400">
         <svg className="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         <p className="text-lg font-medium">Generation Failed</p>
-        <p className="text-sm mt-2 max-w-md text-center">{currentTask.error || 'Unknown error occurred'}</p>
+        <p className="text-sm mt-2 max-w-md text-center">{lastFailed.error || 'Unknown error occurred'}</p>
       </div>
     );
   }

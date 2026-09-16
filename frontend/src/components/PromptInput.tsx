@@ -2,13 +2,13 @@ import React, { useRef, useEffect } from 'react';
 import { useGenerationStore } from '../store/generationStore';
 
 export const PromptInput: React.FC = () => {
-  const { prompt, setPrompt, submitGeneration, currentTask } = useGenerationStore();
+  const { prompt, setPrompt, submitGeneration, isSubmitting } = useGenerationStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault();
-      if (currentTask.status !== 'queued' && currentTask.status !== 'running') {
+      if (!isSubmitting) {
         submitGeneration();
       }
     }

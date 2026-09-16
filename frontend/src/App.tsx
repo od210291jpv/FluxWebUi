@@ -10,7 +10,7 @@ import { useGenerationStore } from './store/generationStore';
 
 export const App: React.FC = () => {
   const { fetchModels, fetchLoras, setConnected } = useSystemStore();
-  const { updateTaskStatus, updateProgress, setResult } = useGenerationStore();
+  const { updateTaskStatus, updateTaskProgress, setResult } = useGenerationStore();
 
   useEffect(() => {
     fetchModels();
@@ -22,24 +22,24 @@ export const App: React.FC = () => {
     const unsubscribe = wsManager.subscribe((event) => {
       switch (event.type) {
         case 'task_queued':
-          updateTaskStatus('queued', event.task_id, event.position);
+          updateTaskStatus(event.task_id, 'queued', event.position);
           break;
         case 'task_started':
-          updateTaskStatus('running', event.task_id);
+          updateTaskStatus(event.task_id, 'running');
           break;
         case 'task_progress':
-          updateProgress(event.step, event.total_steps);
+          updateTaskProgress(event.task_id, event.step, event.total_steps);
           break;
         case 'task_completed':
-          updateTaskStatus('completed', event.task_id);
-          setResult({
+          updateTaskStatus(event.task_id, 'completed');
+          setResult(event.task_id, {
             imageUrl: event.image_url,
             seed: event.seed,
             time: event.generation_time_s
           });
           break;
         case 'task_failed':
-          updateTaskStatus('failed', event.task_id, undefined, event.error);
+          updateTaskStatus(event.task_id, 'failed', undefined, event.error);
           break;
       }
     });
@@ -48,7 +48,7 @@ export const App: React.FC = () => {
       unsubscribe();
       wsManager.disconnect();
     };
-  }, [fetchModels, fetchLoras, setConnected, updateTaskStatus, updateProgress, setResult]);
+  }, [fetchModels, fetchLoras, setConnected, updateTaskStatus, updateTaskProgress, setResult]);
 
   return (
     <div className="flex flex-col h-screen w-full bg-gray-950 text-gray-100 overflow-hidden font-sans selection:bg-violet-500/30">

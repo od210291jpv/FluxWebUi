@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api", tags=["generate"])
 @router.post("/generate", response_model=TaskResponse)
 async def generate_image(request: GenerateRequest, db: AsyncSession = Depends(get_db)):
     task_id = str(uuid.uuid4())
-    task = task_queue.submit(task_id, request)
+    task = await task_queue.submit(task_id, request)
     
     if task.status == TaskStatus.FAILED:
         raise HTTPException(status_code=503, detail=task.error)
