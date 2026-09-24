@@ -16,11 +16,6 @@ from app.routers import generate, gallery, system
 async def lifespan(app: FastAPI):
     await init_db()
     
-    settings.models_dir.mkdir(parents=True, exist_ok=True)
-    settings.loras_dir.mkdir(parents=True, exist_ok=True)
-    settings.output_dir.mkdir(parents=True, exist_ok=True)
-    settings.uploads_dir.mkdir(parents=True, exist_ok=True)
-    
     worker_task = asyncio.create_task(task_queue.worker())
     
     yield
@@ -37,6 +32,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Ensure directories exist before mounting static files
+settings.models_dir.mkdir(parents=True, exist_ok=True)
+settings.loras_dir.mkdir(parents=True, exist_ok=True)
+settings.output_dir.mkdir(parents=True, exist_ok=True)
+settings.uploads_dir.mkdir(parents=True, exist_ok=True)
 
 app.mount("/api/images", StaticFiles(directory=str(settings.output_dir)), name="images")
 app.mount("/api/uploads", StaticFiles(directory=str(settings.uploads_dir)), name="uploads")
