@@ -171,10 +171,14 @@ class FluxInferenceService:
             height=height,
             width=width,
             num_inference_steps=steps,
-            guidance_scale=guidance_scale,
             generator=generator,
             callback_on_step_end=callback,
         )
+
+        if self._pipeline_class == "QwenImage21Pipeline":
+            call_kwargs["true_cfg_scale"] = guidance_scale
+        else:
+            call_kwargs["guidance_scale"] = guidance_scale
 
         if not skip_lora:
             # FLUX pipelines accept max_sequence_length
