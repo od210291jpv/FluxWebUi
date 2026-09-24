@@ -1,10 +1,22 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGalleryStore } from '../store/galleryStore';
+import { useGenerationStore } from '../store/generationStore';
 import type { GalleryItem } from '../types';
 
 export const GalleryGrid: React.FC = () => {
   const { items, loading, deleteImage } = useGalleryStore();
   const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
+  const navigate = useNavigate();
+  const { setParameter } = useGenerationStore();
+
+  const handleEditWithQwen = (item: GalleryItem) => {
+    setParameter('mode', 'edit');
+    setParameter('inputImageId', item.id);
+    setParameter('inputImageUrl', item.image_url);
+    setSelectedImage(null);
+    navigate('/');
+  };
 
   const handleDownload = async (item: GalleryItem) => {
     try {
@@ -117,6 +129,15 @@ export const GalleryGrid: React.FC = () => {
               </div>
 
               <div className="mt-8 flex flex-col gap-3">
+                <button
+                  onClick={() => handleEditWithQwen(selectedImage)}
+                  className="w-full py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                  Edit with Qwen
+                </button>
                 <SendToSaverButton imageUrl={selectedImage.image_url} />
                 <button
                   onClick={() => handleDownload(selectedImage)}

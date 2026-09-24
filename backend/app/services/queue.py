@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import time
 from typing import Optional, Any
+from PIL import Image as PILImage
+from pathlib import Path
 from app.models.schemas import GenerateRequest, TaskStatus
 from app.services.pipeline import inference_service
 from app.services.storage import save_image
@@ -81,6 +83,22 @@ class TaskQueue:
                 steps = task.request.num_inference_steps if task.request.num_inference_steps is not None else 28
                 guidance_scale = task.request.guidance_scale if task.request.guidance_scale is not None else 3.5
 
+                # Load input image for editing mode
+                input_image = None
+                if task.request.mode == "edit" and task.request.input_image_id:
+                    input_image_id = task.request.input_image_id
+                    # Check if the ID refers to a gallery image (output file)
+                    gallery_path = settings.output_dir / f"{input_image_id}.png"
+                    if gallery_path.exists():
+                        input_image = PILImage.open(gallery_path).convert("RGB")
+                    else:
+                        # Check uploads directory
+                        matches = list(settings.uploads_dir.glob(f"{input_image_id}.*"))
+                        if matches:
+                            input_image = PILImage.open(matches[0]).convert("RGB")
+                    if input_image is None:
+                        raise ValueError(f"Input image not found for ID: {input_image_id}")
+
                 loop = asyncio.get_running_loop()
 
                 def progress_callback(current, total):
@@ -108,7 +126,8 @@ class TaskQueue:
                     task.request.max_sequence_length,
                     task.request.lora_path,
                     task.request.lora_scale,
-                    progress_callback
+                    progress_callback,
+                    input_image,
                 )
                 
                 generation_time = time.time() - start_time
@@ -141,7 +160,9 @@ class TaskQueue:
                         status="completed",
                         generation_time_s=task.result["generation_time_s"],
                         lora_name=task.request.lora_path.split("/")[-1] if task.request.lora_path else None,
-                        lora_scale=task.request.lora_scale if task.request.lora_path else None
+                        lora_scale=task.request.lora_scale if task.request.lora_path else None,
+                        mode=task.request.mode,
+                        input_image_filename=f"{task.request.input_image_id}.png" if task.request.input_image_id else None,
                     )
                     db.add(gen)
                     await db.commit()

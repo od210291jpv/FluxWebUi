@@ -1,9 +1,12 @@
 import uuid
-from fastapi import APIRouter, HTTPException, Depends
+import shutil
+from pathlib import Path
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
-from app.models.schemas import GenerateRequest, TaskResponse, TaskStatus, TaskInfoResponse, TasksListResponse
+from app.models.schemas import GenerateRequest, TaskResponse, TaskStatus, TaskInfoResponse, TasksListResponse, UploadedImageResponse
+from app.config import settings
 from app.services.queue import task_queue
 from app.models.database import get_db, Generation
 
@@ -65,6 +68,17 @@ async def cancel_task(task_id: str):
     if not success:
         raise HTTPException(status_code=400, detail="Could not cancel task")
     return {"status": "cancelled"}
+
+
+@router.post("/upload-image", response_model=UploadedImageResponse)
+async def upload_image(file: UploadFile = File(...)):
+    """Upload an image for use as editing source."""
+    image_id = str(uuid.uuid4())
+    ext = Path(file.filename).suffix if file.filename else ".png"
+    dest = settings.uploads_dir / f"{image_id}{ext}"
+    with open(dest, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+    return UploadedImageResponse(image_id=image_id, filename=dest.name)
 
 
 @router.get("/tasks", response_model=TasksListResponse)

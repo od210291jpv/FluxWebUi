@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useGenerationStore } from '../store/generationStore';
 import { useSystemStore } from '../store/systemStore';
+import { uploadImage } from '../api/generate';
 
 const aspectRatios = [
   { label: '1:1', w: 1024, h: 1024 },
@@ -12,7 +13,7 @@ const aspectRatios = [
 ];
 
 export const ParameterPanel: React.FC = () => {
-  const { parameters, setParameter, lastResult } = useGenerationStore();
+  const { parameters, setParameter, lastResult, clearInputImage } = useGenerationStore();
   const { models, loras } = useSystemStore();
 
   useEffect(() => {
@@ -33,10 +34,111 @@ export const ParameterPanel: React.FC = () => {
     }
   };
 
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const res = await uploadImage(file);
+      setParameter('inputImageId', res.image_id);
+      setParameter('inputImageUrl', `/api/uploads/${res.filename}`);
+      setParameter('mode', 'edit');
+    } catch (err) {
+      console.error('Image upload failed:', err);
+    }
+  }, [setParameter]);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    try {
+      const res = await uploadImage(file);
+      setParameter('inputImageId', res.image_id);
+      setParameter('inputImageUrl', `/api/uploads/${res.filename}`);
+      setParameter('mode', 'edit');
+    } catch (err) {
+      console.error('Image upload failed:', err);
+    }
+  }, [setParameter]);
+
   const isSchnell = parameters.model.toLowerCase().includes('schnell');
+  const isQwen = parameters.model.toLowerCase().includes('qwen');
+  const showLora = !isQwen;
 
   return (
     <div className="flex flex-col gap-6 p-4 bg-gray-900 rounded-xl border border-gray-700">
+      {/* Mode Toggle */}
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium text-gray-400">Mode</label>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => { setParameter('mode', 'generate'); clearInputImage(); }}
+            className={`py-2 text-sm rounded-lg border font-medium transition-colors ${
+              parameters.mode === 'generate'
+                ? 'bg-violet-600 border-violet-500 text-white'
+                : 'bg-gray-800 border-gray-600 text-gray-400 hover:bg-gray-700'
+            }`}
+          >
+            ✨ Generate
+          </button>
+          <button
+            onClick={() => setParameter('mode', 'edit')}
+            className={`py-2 text-sm rounded-lg border font-medium transition-colors ${
+              parameters.mode === 'edit'
+                ? 'bg-violet-600 border-violet-500 text-white'
+                : 'bg-gray-800 border-gray-600 text-gray-400 hover:bg-gray-700'
+            }`}
+          >
+            🖌️ Edit
+          </button>
+        </div>
+      </div>
+
+      {/* Input Image (Edit mode) */}
+      {parameters.mode === 'edit' && (
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-gray-400">Source Image</label>
+          {parameters.inputImageUrl ? (
+            <div className="relative group">
+              <img
+                src={parameters.inputImageUrl}
+                alt="Input for editing"
+                className="w-full rounded-lg border border-gray-600 object-cover max-h-48"
+              />
+              <button
+                onClick={clearInputImage}
+                className="absolute top-2 right-2 p-1 bg-gray-900/80 hover:bg-red-900/80 rounded-full text-white transition-colors opacity-0 group-hover:opacity-100"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ) : (
+            <div
+              onDrop={handleDrop}
+              onDragOver={(e) => e.preventDefault()}
+              className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-violet-500 transition-colors cursor-pointer"
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                id="edit-image-upload"
+              />
+              <label htmlFor="edit-image-upload" className="cursor-pointer">
+                <svg className="w-8 h-8 mx-auto mb-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p className="text-sm text-gray-400">Drop image here or click to upload</p>
+                <p className="text-xs text-gray-500 mt-1">Or select from Gallery using "Edit with Qwen"</p>
+              </label>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-col gap-2">
         <label className="text-sm font-medium text-gray-400">Model</label>
         <select
@@ -138,27 +240,29 @@ export const ParameterPanel: React.FC = () => {
         )}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-gray-400">LoRA</label>
-        <select
-          value={parameters.lora || ''}
-          onChange={(e) => setParameter('lora', e.target.value || null)}
-          className="bg-gray-800 border border-gray-600 rounded-lg p-2 text-gray-100 focus:ring-2 focus:ring-violet-500 outline-none"
-        >
-          <option value="">None</option>
-          {loras.map((l) => (
-            <option key={l.path} value={l.path}>{l.name}</option>
-          ))}
-        </select>
-        {parameters.lora && (
-          <div className="flex items-center gap-3 mt-2">
-            <span className="text-xs text-gray-500 w-12 text-right">{parameters.loraScale.toFixed(2)}</span>
-            <input type="range" min={0} max={1} step={0.05} value={parameters.loraScale}
-                   onChange={(e) => setParameter('loraScale', Number(e.target.value))}
-                   className="flex-1 accent-violet-500" />
-          </div>
-        )}
-      </div>
+      {showLora && (
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-gray-400">LoRA</label>
+          <select
+            value={parameters.lora || ''}
+            onChange={(e) => setParameter('lora', e.target.value || null)}
+            className="bg-gray-800 border border-gray-600 rounded-lg p-2 text-gray-100 focus:ring-2 focus:ring-violet-500 outline-none"
+          >
+            <option value="">None</option>
+            {loras.map((l) => (
+              <option key={l.path} value={l.path}>{l.name}</option>
+            ))}
+          </select>
+          {parameters.lora && (
+            <div className="flex items-center gap-3 mt-2">
+              <span className="text-xs text-gray-500 w-12 text-right">{parameters.loraScale.toFixed(2)}</span>
+              <input type="range" min={0} max={1} step={0.05} value={parameters.loraScale}
+                     onChange={(e) => setParameter('loraScale', Number(e.target.value))}
+                     className="flex-1 accent-violet-500" />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

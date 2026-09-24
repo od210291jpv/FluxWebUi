@@ -26,6 +26,8 @@ class Generation(Base):
     generation_time_s = Column(Float, nullable=False)
     lora_name = Column(String, nullable=True)
     lora_scale = Column(Float, nullable=True)
+    mode = Column(String, default="generate")
+    input_image_filename = Column(String, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 engine = create_async_engine(settings.db_url, echo=False)

@@ -47,7 +47,8 @@ async def list_gallery(
             generation_time_s=gen.generation_time_s,
             created_at=gen.created_at,
             lora_name=gen.lora_name,
-            lora_scale=gen.lora_scale
+            lora_scale=gen.lora_scale,
+            mode=gen.mode or "generate",
         )
         for gen in rows
     ]
@@ -79,7 +80,8 @@ async def get_gallery_item(image_id: str, db: AsyncSession = Depends(get_db)):
         generation_time_s=gen.generation_time_s,
         created_at=gen.created_at,
         lora_name=gen.lora_name,
-        lora_scale=gen.lora_scale
+        lora_scale=gen.lora_scale,
+        mode=gen.mode or "generate",
     )
 
 @router.delete("/{image_id}")

@@ -17,6 +17,12 @@ _PIPELINE_DEFAULTS = {
         "supports_max_sequence_length": False,
         "supports_lora": False,          # LoRA loader not yet stable for ZImage
     },
+    "QwenImage21Pipeline": {
+        "steps": 40,
+        "guidance_scale": 1.0,       # CFG ~1 recommended for Qwen-Image
+        "supports_max_sequence_length": False,
+        "supports_lora": False,
+    },
     # FluxPipeline / DiffusionPipeline-loaded FLUX models
     "default": {
         "steps": 28,
@@ -55,6 +61,8 @@ def _get_model_profile(model_dir: Path) -> dict:
     name_lower = model_dir.name.lower()
     if "schnell" in name_lower:
         return {**_PIPELINE_DEFAULTS["schnell"], "pipeline_class": "FluxPipeline"}
+    if "qwen-image" in name_lower:
+        return {**_PIPELINE_DEFAULTS["QwenImage21Pipeline"], "pipeline_class": "QwenImage21Pipeline"}
 
     return {**_PIPELINE_DEFAULTS["default"], "pipeline_class": pipeline_class or "FluxPipeline"}
 
@@ -135,7 +143,8 @@ class FluxInferenceService:
         max_seq_len: int,
         lora_path: Optional[str],
         lora_scale: float,
-        progress_callback: Callable[[int, int], None]
+        progress_callback: Callable[[int, int], None],
+        input_image: Optional[Image.Image] = None,
     ) -> tuple[Image.Image, int]:
         if not self.pipeline:
             raise RuntimeError("No model loaded")
@@ -146,8 +155,8 @@ class FluxInferenceService:
         generator = torch.Generator(device="cpu").manual_seed(seed)
 
         # --- LoRA (only supported for FLUX-family pipelines) ---
-        is_zimage = self._pipeline_class == "ZImagePipeline"
-        if lora_path and not is_zimage:
+        skip_lora = self._pipeline_class in ("ZImagePipeline", "QwenImage21Pipeline")
+        if lora_path and not skip_lora:
             self.pipeline.load_lora_weights(lora_path)
             self.pipeline.fuse_lora(lora_scale=lora_scale)
             self.loaded_lora_path = lora_path
@@ -167,14 +176,18 @@ class FluxInferenceService:
             callback_on_step_end=callback,
         )
 
-        if not is_zimage:
+        if not skip_lora:
             # FLUX pipelines accept max_sequence_length
             call_kwargs["max_sequence_length"] = max_seq_len
+
+        # Qwen-Image 2.1: pass input image for editing mode
+        if self._pipeline_class == "QwenImage21Pipeline" and input_image is not None:
+            call_kwargs["image"] = input_image
 
         try:
             image = self.pipeline(**call_kwargs).images[0]
         finally:
-            if lora_path and not is_zimage:
+            if lora_path and not skip_lora:
                 self.pipeline.unfuse_lora()
                 self.pipeline.unload_lora_weights()
                 self.loaded_lora_path = None

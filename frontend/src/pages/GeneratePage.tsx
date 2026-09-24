@@ -29,7 +29,7 @@ export const GeneratePage: React.FC = () => {
               : 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 active:scale-[0.98]'
           }`}
         >
-          {isSubmitting ? 'Submitting...' : activeCount > 0 ? `Generate (${activeCount} in queue)` : 'Generate'}
+          {isSubmitting ? 'Submitting...' : activeCount > 0 ? `${parameters.mode === 'edit' ? 'Edit' : 'Generate'} (${activeCount} in queue)` : parameters.mode === 'edit' ? '🖌️ Edit Image' : '✨ Generate'}
         </button>
         <QueueIndicator />
       </div>

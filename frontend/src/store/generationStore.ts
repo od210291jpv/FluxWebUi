@@ -11,6 +11,9 @@ interface GenerationParameters {
   seedMode: 'random' | 'fixed';
   lora: string | null;
   loraScale: number;
+  mode: 'generate' | 'edit';
+  inputImageId: string | null;
+  inputImageUrl: string | null;
 }
 
 export interface QueuedTask {
@@ -47,6 +50,7 @@ interface GenerationState {
   updateTaskProgress: (taskId: string, step: number, total: number) => void;
   setResult: (taskId: string, result: LastResult) => void;
   reuseSeed: (seed: number) => void;
+  clearInputImage: () => void;
   /** Remove completed/failed tasks older than the given age (ms). */
   pruneFinishedTasks: (maxAgeMs?: number) => void;
 }
@@ -65,6 +69,9 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
     seedMode: 'random',
     lora: null,
     loraScale: 0.8,
+    mode: 'generate',
+    inputImageId: null,
+    inputImageUrl: null,
   },
   isSubmitting: false,
   queuedTasks: [],
@@ -92,6 +99,8 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
         seed,
         lora_path: parameters.lora,
         lora_scale: parameters.loraScale,
+        mode: parameters.mode,
+        input_image_id: parameters.inputImageId,
       });
       // Add the new task to the queue list
       set((state) => ({
@@ -143,6 +152,10 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
 
   reuseSeed: (seed) => set((state) => ({ 
     parameters: { ...state.parameters, seedMode: 'fixed', seed } 
+  })),
+
+  clearInputImage: () => set((state) => ({
+    parameters: { ...state.parameters, mode: 'generate', inputImageId: null, inputImageUrl: null }
   })),
 
   pruneFinishedTasks: (maxAgeMs = PRUNE_DELAY_MS) => {

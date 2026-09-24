@@ -9,6 +9,8 @@ export interface GenerateRequest {
   max_sequence_length?: number;
   lora_path: string | null;
   lora_scale: number;
+  mode: 'generate' | 'edit';
+  input_image_id: string | null;
 }
 
 export interface TaskResponse {
@@ -39,6 +41,7 @@ export interface GalleryItem {
   steps: number;
   guidance: number;
   time: number;
+  mode: string;
 }
 
 export interface GalleryListResponse {
@@ -83,6 +86,11 @@ export interface LoraInfo {
 
 export interface LorasResponse {
   loras: LoraInfo[];
+}
+
+export interface UploadedImageResponse {
+  image_id: string;
+  filename: string;
 }
 
 export interface TaskQueuedEvent {
@@ -136,6 +144,7 @@ export interface QueuedTaskInfo {
   guidance_scale: number | null;
   lora_path: string | null;
   lora_scale: number;
+  mode: string;
   progress_step: number | null;
   progress_total: number | null;
   error: string | null;

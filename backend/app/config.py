@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     models_dir: Path = Path("./models_cache")
     loras_dir: Path = Path("./loras")
     output_dir: Path = Path("./outputs")
+    uploads_dir: Path = Path("./uploads")
     db_url: str = "sqlite+aiosqlite:///flux_webui.db"
     host: str = "0.0.0.0"
     port: int = 8000

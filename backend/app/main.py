@@ -19,6 +19,7 @@ async def lifespan(app: FastAPI):
     settings.models_dir.mkdir(parents=True, exist_ok=True)
     settings.loras_dir.mkdir(parents=True, exist_ok=True)
     settings.output_dir.mkdir(parents=True, exist_ok=True)
+    settings.uploads_dir.mkdir(parents=True, exist_ok=True)
     
     worker_task = asyncio.create_task(task_queue.worker())
     
@@ -38,6 +39,7 @@ app.add_middleware(
 )
 
 app.mount("/api/images", StaticFiles(directory=str(settings.output_dir)), name="images")
+app.mount("/api/uploads", StaticFiles(directory=str(settings.uploads_dir)), name="uploads")
 
 app.include_router(generate.router)
 app.include_router(gallery.router)

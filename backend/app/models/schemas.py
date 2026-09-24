@@ -20,6 +20,8 @@ class GenerateRequest(BaseModel):
     max_sequence_length: int = Field(512, ge=256, le=512)
     lora_path: Optional[str] = Field(None, description="Path to LoRA")
     lora_scale: float = Field(0.8, ge=0.0, le=1.0)
+    mode: str = Field("generate", description="'generate' for text-to-image, 'edit' for image editing", pattern="^(generate|edit)$")
+    input_image_id: Optional[str] = Field(None, description="Gallery image ID or uploaded image ID to use as editing source")
 
     @model_validator(mode='after')
     def validate_dimensions(self) -> 'GenerateRequest':
@@ -51,6 +53,7 @@ class GalleryItem(BaseModel):
     created_at: datetime
     lora_name: Optional[str] = None
     lora_scale: Optional[float] = None
+    mode: str = "generate"
 
 class GalleryListResponse(BaseModel):
     items: list[GalleryItem]
@@ -85,6 +88,10 @@ class LoraInfo(BaseModel):
 class LorasResponse(BaseModel):
     loras: list[LoraInfo]
 
+class UploadedImageResponse(BaseModel):
+    image_id: str
+    filename: str
+
 class TaskInfoResponse(BaseModel):
     task_id: str
     status: TaskStatus
@@ -98,6 +105,7 @@ class TaskInfoResponse(BaseModel):
     guidance_scale: Optional[float] = None
     lora_path: Optional[str] = None
     lora_scale: float
+    mode: str = "generate"
     # Progress (set while running)
     progress_step: Optional[int] = None
     progress_total: Optional[int] = None

@@ -8,7 +8,8 @@ pydantic>=2.6.4
 pydantic-settings>=2.2.1
 # diffusers>=0.27.0  # replaced by source install for ZImagePipeline support
 git+https://github.com/huggingface/diffusers.git
-transformers>=4.39.0
+transformers>=5.17.0
+python-multipart>=0.0.7
 accelerate>=0.28.0
 torch>=2.2.2
 pillow>=10.2.0
